@@ -10,6 +10,7 @@ import net.minecraft.inventory.InventoryCraftResult;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.NonNullList;
 
@@ -46,18 +47,50 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
         return craftResult;
     }
 
+    public NonNullList<ItemStack> getInventory() {
+        return inventory;
+    }
+
     @Override
     public void readFromNBT(NBTTagCompound tagCompound) {
         super.readFromNBT(tagCompound);
 
+        NBTTagList tagList = tagCompound.getTagList("Inventory", 10);
+
         craftingGrid.readFromNBT(tagCompound, "CraftingGrid");
+
+        for (int i = 0; i < tagList.tagCount(); i++) {
+            NBTTagCompound tagCompoundSlot = tagList.getCompoundTagAt(i);
+
+            int index = tagCompoundSlot.getByte("Slot");
+
+            if (index >= 0 && index < inventory.size()) {
+                inventory.set(i, new ItemStack(tagCompoundSlot));
+            }
+        }
     }
 
     @Override
     public NBTTagCompound writeToNBT(NBTTagCompound tagCompound) {
         super.writeToNBT(tagCompound);
 
+        NBTTagList tagList = new NBTTagList();
+
+        // Phantom slots
         craftingGrid.writeFromNBT(tagCompound, "CraftingGrid");
+
+        // Inventory slots
+        for (byte i = 0; i < inventory.size(); i++) {
+            NBTTagCompound tagCompoundSlot = new NBTTagCompound();
+
+            tagList.appendTag(tagCompoundSlot);
+
+            tagCompoundSlot.setByte("Slot", i);
+
+            inventory.get(i).writeToNBT(tagCompoundSlot);
+        }
+
+        tagCompound.setTag("Inventory", tagList);
 
         return tagCompound;
     }
@@ -68,18 +101,18 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
     }
 
     @Override
-    public boolean canInsertItem(int index, ItemStack itemStackIn, EnumFacing direction) {
-        return false;
+    public boolean canInsertItem(int index, ItemStack stack, EnumFacing direction) {
+        return index > 9 && index < 20;
     }
 
     @Override
     public boolean canExtractItem(int index, ItemStack stack, EnumFacing direction) {
-        return false;
+        return index > 9 && index < 20;
     }
 
     @Override
     public int getSizeInventory() {
-        return 0;
+        return inventory.size();
     }
 
     @Override
@@ -89,22 +122,66 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
 
     @Override
     public ItemStack getStackInSlot(int index) {
-        return null;
+        if (index < 0 || index >= inventory.size()) {
+            return ItemStack.EMPTY;
+        }
+
+        return inventory.get(index);
     }
 
     @Override
     public ItemStack decrStackSize(int index, int count) {
-        return null;
+        ItemStack stack = inventory.get(index);
+
+        if (stack != ItemStack.EMPTY) {
+            if (stack.getCount() <= count) {
+                setInventorySlotContents(index, ItemStack.EMPTY);
+
+                markDirty();
+
+                return stack;
+            }
+
+            ItemStack splitStack = stack.splitStack(count);
+
+            if (stack.getCount() == 0) {
+                setInventorySlotContents(index, ItemStack.EMPTY);
+            } else {
+                setInventorySlotContents(index, stack);
+            }
+
+            markDirty();
+
+            return splitStack;
+        }
+
+        return ItemStack.EMPTY;
     }
 
     @Override
     public ItemStack removeStackFromSlot(int index) {
-        return null;
+        if (getStackInSlot(index) != ItemStack.EMPTY) {
+            ItemStack stack = getStackInSlot(index);
+
+            setInventorySlotContents(index, ItemStack.EMPTY);
+
+            return stack;
+        }
+
+        return ItemStack.EMPTY;
     }
 
     @Override
     public void setInventorySlotContents(int index, ItemStack stack) {
+        inventory.set(index, stack);
 
+        if (stack != ItemStack.EMPTY && stack.getCount() > getInventoryStackLimit()) {
+            stack.setCount(getInventoryStackLimit());
+        }
+
+        markDirty();
+
+        //onChanged
     }
 
     @Override
@@ -114,7 +191,7 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
 
     @Override
     public boolean isUsableByPlayer(EntityPlayer player) {
-        return false;
+        return true;
     }
 
     @Override
@@ -129,7 +206,7 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
 
     @Override
     public boolean isItemValidForSlot(int index, ItemStack stack) {
-        return false;
+        return true;
     }
 
     @Override

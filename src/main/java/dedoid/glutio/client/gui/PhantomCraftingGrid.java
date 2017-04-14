@@ -67,7 +67,7 @@ public class PhantomCraftingGrid implements IInventory {
 
     @Override
     public ItemStack decrStackSize(int index, int count) {
-        ItemStack stack = inventory.get(index);
+        ItemStack stack = getStackInSlot(index);
 
         inventory.set(index, ItemStack.EMPTY);
 
@@ -92,11 +92,7 @@ public class PhantomCraftingGrid implements IInventory {
     @Override
     public void setInventorySlotContents(int index, ItemStack stack) {
         if (stack != ItemStack.EMPTY) {
-            inventory.set(index, stack.copy());
-
-            if (index < 9) {
-                inventory.get(index).setCount(1);
-            }
+            inventory.set(index, stack.copy()).setCount(1);
         } else {
             inventory.set(index, ItemStack.EMPTY);
         }

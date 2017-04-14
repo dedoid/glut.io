@@ -1,10 +1,8 @@
 package dedoid.glutio.client.container;
 
 import dedoid.glutio.client.gui.IPhantomSlot;
-import dedoid.glutio.client.gui.SlotPhantom;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
-import net.minecraft.inventory.ClickType;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
@@ -35,31 +33,6 @@ public class ContainerBase extends Container {
     @Override
     public boolean canInteractWith(EntityPlayer player) {
         return true;
-    }
-
-    @Override
-    public ItemStack slotClick(int slotNum, int mouseButton, ClickType clickType, EntityPlayer player) {
-        Slot slot = slotNum < 0 ? null : getSlot(slotNum);
-
-        if (slot instanceof SlotPhantom) {
-            ItemStack stack = player.inventory.getItemStack();
-
-            if (stack != ItemStack.EMPTY) {
-                ItemStack copy = stack.copy();
-
-                copy.setCount(1);
-
-                slot.putStack(copy);
-
-                return stack;
-            } else {
-                slot.putStack(ItemStack.EMPTY);
-
-                return ItemStack.EMPTY;
-            }
-        }
-
-        return super.slotClick(slotNum, mouseButton, clickType, player);
     }
 
     @Override
