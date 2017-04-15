@@ -1,49 +1,25 @@
 package dedoid.glutio.client.gui;
 
+import dedoid.glutio.common.block.tile.TileBase;
+import dedoid.glutio.common.block.tile.TileMolecularFabricator;
+import dedoid.glutio.common.net.PacketHandler;
+import dedoid.glutio.common.net.PacketMolecularFabricator;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.text.ITextComponent;
 
 public class PhantomCraftingGrid implements IInventory {
 
+    TileBase tile;
+
     NonNullList<ItemStack> inventory;
 
-    public PhantomCraftingGrid() {
+    public PhantomCraftingGrid(TileBase tile) {
+        this.tile = tile;
+
         inventory = NonNullList.withSize(9, ItemStack.EMPTY);
-    }
-
-    public void readFromNBT(NBTTagCompound tagCompound, String tag) {
-        NBTTagList tagList = tagCompound.getTagList(tag, 10);
-
-        for (int i = 0; i < tagList.tagCount(); i++) {
-            NBTTagCompound tagCompoundSlot = tagList.getCompoundTagAt(i);
-
-            int index = tagCompoundSlot.getByte("Slot");
-
-            if (index >= 0 && index < inventory.size()) {
-                inventory.set(i, new ItemStack(tagCompoundSlot));
-            }
-        }
-    }
-
-    public void writeFromNBT(NBTTagCompound tagCompound, String tag) {
-        NBTTagList tagList = new NBTTagList();
-
-        for (byte i = 0; i < inventory.size(); i++) {
-            NBTTagCompound tagCompoundSlot = new NBTTagCompound();
-
-            tagList.appendTag(tagCompoundSlot);
-
-            tagCompoundSlot.setByte("Slot", i);
-
-            inventory.get(i).writeToNBT(tagCompoundSlot);
-        }
-
-        tagCompound.setTag(tag, tagList);
     }
 
     @Override
@@ -67,40 +43,40 @@ public class PhantomCraftingGrid implements IInventory {
 
     @Override
     public ItemStack decrStackSize(int index, int count) {
-        ItemStack stack = getStackInSlot(index);
-
         inventory.set(index, ItemStack.EMPTY);
+        //setInventorySlotContents(index, ItemStack.EMPTY);
 
-        if (stack == ItemStack.EMPTY) {
-            return ItemStack.EMPTY;
-        }
+        changed(index, ItemStack.EMPTY);
 
-        stack.setCount(0);
-
-        return stack;
+        return ItemStack.EMPTY;
     }
 
     @Override
     public ItemStack removeStackFromSlot(int index) {
-        ItemStack stack = getStackInSlot(index);
+        inventory.set(index, ItemStack.EMPTY);
 
-        setInventorySlotContents(index, ItemStack.EMPTY);
+        changed(index, ItemStack.EMPTY);
 
-        return stack;
+        return ItemStack.EMPTY;
     }
 
     @Override
     public void setInventorySlotContents(int index, ItemStack stack) {
-        if (stack != ItemStack.EMPTY) {
-            inventory.set(index, stack.copy()).setCount(1);
+        if (!stack.isEmpty()) {
+            inventory.set(index, stack.copy());
+
+            inventory.get(index).setCount(1);
+
         } else {
             inventory.set(index, ItemStack.EMPTY);
         }
+
+        changed(index, stack);
     }
 
     @Override
     public int getInventoryStackLimit() {
-        return 1;
+        return 0;
     }
 
     @Override
@@ -125,7 +101,7 @@ public class PhantomCraftingGrid implements IInventory {
 
     @Override
     public boolean isItemValidForSlot(int index, ItemStack stack) {
-        return index < 9;
+        return true;
     }
 
     @Override
@@ -150,7 +126,7 @@ public class PhantomCraftingGrid implements IInventory {
 
     @Override
     public String getName() {
-        return "PhantomCraftingGrid";
+        return "phantomCraftingGrid";
     }
 
     @Override
@@ -161,5 +137,11 @@ public class PhantomCraftingGrid implements IInventory {
     @Override
     public ITextComponent getDisplayName() {
         return null;
+    }
+
+    public void changed(int index, ItemStack stack) {
+        if (tile instanceof TileMolecularFabricator) {
+            PacketHandler.INSTANCE.sendToServer(PacketMolecularFabricator.setSlot((TileMolecularFabricator) tile, index, stack));
+        }
     }
 }

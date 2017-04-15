@@ -1,11 +1,9 @@
 package dedoid.glutio.client.container;
 
-import dedoid.glutio.client.gui.IPhantomSlot;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.Slot;
-import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 
 public class ContainerBase extends Container {
@@ -33,24 +31,5 @@ public class ContainerBase extends Container {
     @Override
     public boolean canInteractWith(EntityPlayer player) {
         return true;
-    }
-
-    @Override
-    public ItemStack transferStackInSlot(EntityPlayer player, int index) {
-        ItemStack stack = ItemStack.EMPTY;
-        Slot slot = getSlot(index);
-
-        if (slot.getHasStack()) {
-            if (slot instanceof IPhantomSlot) {
-                slot.putStack(ItemStack.EMPTY);
-            }
-        }
-
-        return stack;
-    }
-
-    @Override
-    public boolean canDragIntoSlot(Slot slot) {
-        return !(slot instanceof IPhantomSlot);
     }
 }

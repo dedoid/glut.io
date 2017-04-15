@@ -4,6 +4,7 @@ import dedoid.glutio.client.core.handler.GuiHandler;
 import dedoid.glutio.common.block.ModBlocks;
 import dedoid.glutio.common.core.proxy.IProxy;
 import dedoid.glutio.common.lib.LibMisc;
+import dedoid.glutio.common.net.PacketHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -19,6 +20,8 @@ public class GlutIO {
 
     @SidedProxy(clientSide = LibMisc.PROXY_CLIENT, serverSide = LibMisc.PROXY_SERVER)
     public static IProxy proxy;
+
+    public static final PacketHandler packetPipeline = new PacketHandler();
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {

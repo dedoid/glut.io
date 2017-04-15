@@ -1,42 +1,38 @@
 package dedoid.glutio.common.block.tile;
 
-import com.mojang.authlib.GameProfile;
 import dedoid.glutio.client.gui.PhantomCraftingGrid;
-import dedoid.glutio.common.FakePlayerGlutIO;
+import dedoid.glutio.common.core.util.FakePlayerGlutIO;
+import dedoid.glutio.common.core.util.ItemUtil;
+import dedoid.glutio.common.net.PacketHandler;
+import dedoid.glutio.common.net.PacketMolecularFabricator;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.ISidedInventory;
-import net.minecraft.inventory.InventoryCraftResult;
+import net.minecraft.inventory.*;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ITickable;
 import net.minecraft.util.NonNullList;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 
-import java.util.UUID;
-
-public class TileMolecularFabricator extends TileBase implements ISidedInventory {
+public class TileMolecularFabricator extends TileBase implements ISidedInventory, ITickable {
 
     PhantomCraftingGrid craftingGrid;
     NonNullList<ItemStack> inventory;
+    InventoryCraftResult craftResult;
 
-    private InventoryCraftResult craftResult;
-    public IRecipe currentRecipe;
+    FakePlayerGlutIO internalPlayer;
 
-    private static UUID uuid;
-    private static GameProfile molecularFabricatorProfile;
-    private FakePlayerGlutIO internalPlayer;
+    long ticksSinceLastCraft;
 
     public TileMolecularFabricator() {
-        craftingGrid = new PhantomCraftingGrid();
+        craftingGrid = new PhantomCraftingGrid(this);
         inventory = NonNullList.withSize(9, ItemStack.EMPTY);
-
         craftResult = new InventoryCraftResult();
 
-        uuid = UUID.fromString("4d10be36-8c25-4962-b6b1-f7f1c64a3077");
-        molecularFabricatorProfile = new GameProfile(uuid, "[GlutIOMolecularFabricator]");
-        //internalPlayer = new FakePlayerGlutIO(world, getPos(), molecularFabricatorProfile);
+        ticksSinceLastCraft = 0;
     }
 
     public IInventory getCraftingGrid() {
@@ -51,7 +47,160 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
         return inventory;
     }
 
+    public boolean craftRecipe() {
+        int[] usedItems = new int[9];
+
+        InventoryCrafting craftingInventory = new InventoryCrafting(new Container() {
+            @Override
+            public boolean canInteractWith(EntityPlayer player) {
+                return false;
+            }
+        }, 3, 3);
+
+        for (int i = 0; i < 9; i++) {
+            ItemStack required = getCraftingGrid().getStackInSlot(i);
+
+            if (required != ItemStack.EMPTY) {
+                for (int j = 0; j < 9; j++) {
+                    if (getStackInSlot(j) != ItemStack.EMPTY && getStackInSlot(j).getCount() > usedItems[j] && compareDamageable(getStackInSlot(j), required)) {
+                        required = ItemStack.EMPTY;
+                        usedItems[j]++;
+
+                        ItemStack craftingStack = getStackInSlot(j).copy();
+                        craftingStack.setCount(1);
+
+                        craftingInventory.setInventorySlotContents(i, craftingStack);
+                    }
+                }
+
+                if (required != ItemStack.EMPTY) {
+                    return false;
+                }
+            }
+
+        }
+
+        ItemStack output = CraftingManager.getInstance().findMatchingRecipe(craftingInventory, world);
+
+        if (output != ItemStack.EMPTY) {
+
+            if (internalPlayer == null) {
+                internalPlayer = new FakePlayerGlutIO(world, getPos());
+            }
+
+            MinecraftForge.EVENT_BUS.post(new PlayerEvent.ItemCraftedEvent(internalPlayer, output, craftingInventory));
+
+            NonNullList<ItemStack> remaining = CraftingManager.getInstance().getRemainingItems(craftingInventory, world);
+
+            for (int i = 0; i < 9; i++) {
+                for (int j = 0; j < usedItems[i] && !getStackInSlot(i).isEmpty(); j++) {
+                    setInventorySlotContents(i, eatOneItemForCrafting(i, getStackInSlot(i).copy(), remaining));
+                }
+            }
+
+            /*for(ItemStack stack : remaining) {
+                if(!stack.isEmpty()) {
+                    containerItems.add(stack.copy());
+                }
+            }*/
+
+            for (int i = 0; i < 9; i++) {
+                if (getStackInSlot(i).isEmpty()) {
+                    setInventorySlotContents(i, output);
+
+                    break;
+                } else if (ItemUtil.areStackMergable(getStackInSlot(i), output)) {
+                    ItemStack cur = getStackInSlot(i).copy();
+                    cur.setCount(cur.getCount() + output.getCount());
+
+                    if (cur.getCount() > cur.getMaxStackSize()) {
+                        ItemStack overflow = cur.copy();
+
+                        overflow.setCount(cur.getCount() - cur.getMaxStackSize());
+                        cur.setCount(cur.getMaxStackSize());
+                        //containerItems.add(overflow);
+                    }
+
+                    setInventorySlotContents(i, cur);
+
+                    break;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private ItemStack eatOneItemForCrafting(int slot, ItemStack avail, NonNullList<ItemStack> remaining) {
+        if (remaining != null && remaining.size() > 0 && avail.getItem().hasContainerItem(avail)) {
+            ItemStack used = avail.getItem().getContainerItem(avail);
+
+            if(used != ItemStack.EMPTY) {
+                for(int i=0; i < remaining.size();  i++) {
+                    ItemStack stack = remaining.get(i);
+
+                    if(stack != ItemStack.EMPTY && stack.isItemEqualIgnoreDurability(used) && isItemValidForSlot(slot, stack)) {
+                        remaining.set(i, ItemStack.EMPTY);
+
+                        return stack;
+                    }
+                }
+            }
+        }
+
+        avail.setCount(avail.getCount() - 1);
+
+        if (avail.getCount() == 0) {
+            avail = ItemStack.EMPTY;
+        }
+
+        return avail;
+    }
+
+    private boolean compareDamageable(ItemStack stack, ItemStack required) {
+        if (stack.isItemEqual(required)) {
+            return true;
+        }
+
+        if (stack.isItemStackDamageable() && stack.getItem() == required.getItem()) {
+            return stack.getItemDamage() < stack.getMaxDamage();
+        }
+
+        return false;
+    }
+
+    public void updateCraftingOutput() {
+        InventoryCrafting inv = new InventoryCrafting(new Container() {
+
+            @Override
+            public boolean canInteractWith(EntityPlayer player) {
+                return false;
+            }
+        }, 3, 3);
+
+        for (int i = 0; i < 9; i++) {
+            inv.setInventorySlotContents(i, getCraftingGrid().getStackInSlot(i));
+        }
+
+        ItemStack matches = CraftingManager.getInstance().findMatchingRecipe(inv, world);
+
+        getCraftResult().setInventorySlotContents(0, matches);
+
+        markDirty();
+    }
+
     @Override
+    public void update() {
+        ticksSinceLastCraft++;
+
+        if (ticksSinceLastCraft >= 3 && !getCraftResult().getStackInSlot(0).isEmpty()) {
+            if (craftRecipe()) {
+                ticksSinceLastCraft = 0;
+            }
+        }
+    }
+
+    /*@Override
     public void readFromNBT(NBTTagCompound tagCompound) {
         super.readFromNBT(tagCompound);
 
@@ -76,10 +225,8 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
 
         NBTTagList tagList = new NBTTagList();
 
-        // Phantom slots
         craftingGrid.writeFromNBT(tagCompound, "CraftingGrid");
 
-        // Inventory slots
         for (byte i = 0; i < inventory.size(); i++) {
             NBTTagCompound tagCompoundSlot = new NBTTagCompound();
 
@@ -93,21 +240,23 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
         tagCompound.setTag("Inventory", tagList);
 
         return tagCompound;
-    }
+
+        return tagCompound;
+    }*/
 
     @Override
     public int[] getSlotsForFace(EnumFacing side) {
-        return new int[0];
+        return new int[] {0, 1, 2, 3, 4, 5, 6, 7, 8};
     }
 
     @Override
     public boolean canInsertItem(int index, ItemStack stack, EnumFacing direction) {
-        return index > 9 && index < 20;
+        return true;
     }
 
     @Override
     public boolean canExtractItem(int index, ItemStack stack, EnumFacing direction) {
-        return index > 9 && index < 20;
+        return true;
     }
 
     @Override
@@ -133,26 +282,22 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
     public ItemStack decrStackSize(int index, int count) {
         ItemStack stack = inventory.get(index);
 
-        if (stack != ItemStack.EMPTY) {
+        if (!stack.isEmpty()) {
             if (stack.getCount() <= count) {
+                ItemStack result = stack;
+
                 setInventorySlotContents(index, ItemStack.EMPTY);
 
                 markDirty();
 
-                return stack;
+                return result;
             }
 
-            ItemStack splitStack = stack.splitStack(count);
-
-            if (stack.getCount() == 0) {
-                setInventorySlotContents(index, ItemStack.EMPTY);
-            } else {
-                setInventorySlotContents(index, stack);
-            }
+            ItemStack split = stack.splitStack(count);
 
             markDirty();
 
-            return splitStack;
+            return split;
         }
 
         return ItemStack.EMPTY;
@@ -160,15 +305,13 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
 
     @Override
     public ItemStack removeStackFromSlot(int index) {
-        if (getStackInSlot(index) != ItemStack.EMPTY) {
-            ItemStack stack = getStackInSlot(index);
+        ItemStack stack = getStackInSlot(index);
 
-            setInventorySlotContents(index, ItemStack.EMPTY);
+        inventory.set(index, ItemStack.EMPTY);
 
-            return stack;
-        }
+        markDirty();
 
-        return ItemStack.EMPTY;
+        return stack;
     }
 
     @Override
@@ -180,8 +323,6 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
         }
 
         markDirty();
-
-        //onChanged
     }
 
     @Override
@@ -234,3 +375,5 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
         return false;
     }
 }
+
+
