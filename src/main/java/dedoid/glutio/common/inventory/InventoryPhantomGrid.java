@@ -1,22 +1,21 @@
-package dedoid.glutio.client.gui;
+package dedoid.glutio.common.inventory;
 
-import dedoid.glutio.common.block.tile.TileBase;
-import dedoid.glutio.common.block.tile.TileMolecularFabricator;
+import dedoid.glutio.common.block.tile.TileMolecularAssembler;
 import dedoid.glutio.common.net.PacketHandler;
-import dedoid.glutio.common.net.PacketMolecularFabricator;
+import dedoid.glutio.common.net.PacketMolecularAssembler;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.text.ITextComponent;
 
-public class PhantomCraftingGrid implements IInventory {
+public class InventoryPhantomGrid implements IInventory {
 
-    TileBase tile;
+    TileMolecularAssembler tile;
 
     NonNullList<ItemStack> inventory;
 
-    public PhantomCraftingGrid(TileBase tile) {
+    public InventoryPhantomGrid(TileMolecularAssembler tile) {
         this.tile = tile;
 
         inventory = NonNullList.withSize(9, ItemStack.EMPTY);
@@ -44,9 +43,8 @@ public class PhantomCraftingGrid implements IInventory {
     @Override
     public ItemStack decrStackSize(int index, int count) {
         inventory.set(index, ItemStack.EMPTY);
-        //setInventorySlotContents(index, ItemStack.EMPTY);
 
-        changed(index, ItemStack.EMPTY);
+        PacketHandler.INSTANCE.sendToServer(PacketMolecularAssembler.setSlot(tile, index, ItemStack.EMPTY));
 
         return ItemStack.EMPTY;
     }
@@ -55,7 +53,7 @@ public class PhantomCraftingGrid implements IInventory {
     public ItemStack removeStackFromSlot(int index) {
         inventory.set(index, ItemStack.EMPTY);
 
-        changed(index, ItemStack.EMPTY);
+        PacketHandler.INSTANCE.sendToServer(PacketMolecularAssembler.setSlot(tile, index, ItemStack.EMPTY));
 
         return ItemStack.EMPTY;
     }
@@ -67,16 +65,17 @@ public class PhantomCraftingGrid implements IInventory {
 
             inventory.get(index).setCount(1);
 
+            PacketHandler.INSTANCE.sendToServer(PacketMolecularAssembler.setSlot(tile, index, inventory.get(index)));
         } else {
             inventory.set(index, ItemStack.EMPTY);
-        }
 
-        changed(index, stack);
+            PacketHandler.INSTANCE.sendToServer(PacketMolecularAssembler.setSlot(tile, index, ItemStack.EMPTY));
+        }
     }
 
     @Override
     public int getInventoryStackLimit() {
-        return 0;
+        return 1;
     }
 
     @Override
@@ -126,7 +125,7 @@ public class PhantomCraftingGrid implements IInventory {
 
     @Override
     public String getName() {
-        return "phantomCraftingGrid";
+        return null;
     }
 
     @Override
@@ -137,11 +136,5 @@ public class PhantomCraftingGrid implements IInventory {
     @Override
     public ITextComponent getDisplayName() {
         return null;
-    }
-
-    public void changed(int index, ItemStack stack) {
-        if (tile instanceof TileMolecularFabricator) {
-            PacketHandler.INSTANCE.sendToServer(PacketMolecularFabricator.setSlot((TileMolecularFabricator) tile, index, stack));
-        }
     }
 }

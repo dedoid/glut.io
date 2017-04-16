@@ -1,75 +1,60 @@
 package dedoid.glutio.common.block.tile;
 
-import dedoid.glutio.client.gui.PhantomCraftingGrid;
 import dedoid.glutio.common.core.util.FakePlayerGlutIO;
 import dedoid.glutio.common.core.util.ItemUtil;
-import dedoid.glutio.common.net.PacketHandler;
-import dedoid.glutio.common.net.PacketMolecularFabricator;
+import dedoid.glutio.common.inventory.InventoryPhantomGrid;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.NonNullList;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 
-public class TileMolecularFabricator extends TileBase implements ISidedInventory, ITickable {
+public class TileMolecularAssembler extends TileBase implements ITickable, ISidedInventory {
 
-    PhantomCraftingGrid craftingGrid;
-    NonNullList<ItemStack> inventory;
-    InventoryCraftResult craftResult;
+    private NonNullList<ItemStack> inventory;
+    private InventoryPhantomGrid phantomGrid;
+    private InventoryCraftResult craftResult;
 
-    FakePlayerGlutIO internalPlayer;
+    private FakePlayerGlutIO internalPlayer;
 
-    long ticksSinceLastCraft;
+    private long TICKS_SINCE_LAST_CRAFT;
 
-    public TileMolecularFabricator() {
-        craftingGrid = new PhantomCraftingGrid(this);
+    public TileMolecularAssembler() {
         inventory = NonNullList.withSize(9, ItemStack.EMPTY);
+        phantomGrid = new InventoryPhantomGrid(this);
         craftResult = new InventoryCraftResult();
 
-        ticksSinceLastCraft = 0;
+        TICKS_SINCE_LAST_CRAFT = 0;
     }
 
-    public IInventory getCraftingGrid() {
-        return craftingGrid;
+    public IInventory getPhantomGrid() {
+        return phantomGrid;
+    }
+
+    public InventoryCrafting getCraftingMatrix() {
+        return craftingMatrix;
     }
 
     public IInventory getCraftResult() {
         return craftResult;
     }
 
-    public NonNullList<ItemStack> getInventory() {
-        return inventory;
-    }
-
-    public boolean craftRecipe() {
+    //TODO: don't craft when inventory full
+    private boolean craftRecipe() {
         int[] usedItems = new int[9];
 
-        InventoryCrafting craftingInventory = new InventoryCrafting(new Container() {
-            @Override
-            public boolean canInteractWith(EntityPlayer player) {
-                return false;
-            }
-        }, 3, 3);
-
         for (int i = 0; i < 9; i++) {
-            ItemStack required = getCraftingGrid().getStackInSlot(i);
+            ItemStack required = craftingMatrix.getStackInSlot(i);
 
             if (required != ItemStack.EMPTY) {
                 for (int j = 0; j < 9; j++) {
-                    if (getStackInSlot(j) != ItemStack.EMPTY && getStackInSlot(j).getCount() > usedItems[j] && compareDamageable(getStackInSlot(j), required)) {
+                    if (getStackInSlot(j) != ItemStack.EMPTY && getStackInSlot(j).getCount() > usedItems[j] && ItemUtil.isItemEqual(getStackInSlot(j), required, true, false)) {
                         required = ItemStack.EMPTY;
                         usedItems[j]++;
-
-                        ItemStack craftingStack = getStackInSlot(j).copy();
-                        craftingStack.setCount(1);
-
-                        craftingInventory.setInventorySlotContents(i, craftingStack);
                     }
                 }
 
@@ -80,17 +65,16 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
 
         }
 
-        ItemStack output = CraftingManager.getInstance().findMatchingRecipe(craftingInventory, world);
+        ItemStack output = CraftingManager.getInstance().findMatchingRecipe(craftingMatrix, world);
 
-        if (output != ItemStack.EMPTY) {
+        NonNullList<ItemStack> remaining = CraftingManager.getInstance().getRemainingItems(craftingMatrix, world);
 
+        if (!output.isEmpty()) {
             if (internalPlayer == null) {
                 internalPlayer = new FakePlayerGlutIO(world, getPos());
             }
 
-            MinecraftForge.EVENT_BUS.post(new PlayerEvent.ItemCraftedEvent(internalPlayer, output, craftingInventory));
-
-            NonNullList<ItemStack> remaining = CraftingManager.getInstance().getRemainingItems(craftingInventory, world);
+            MinecraftForge.EVENT_BUS.post(new PlayerEvent.ItemCraftedEvent(internalPlayer, output, craftingMatrix));
 
             for (int i = 0; i < 9; i++) {
                 for (int j = 0; j < usedItems[i] && !getStackInSlot(i).isEmpty(); j++) {
@@ -98,28 +82,14 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
                 }
             }
 
-            /*for(ItemStack stack : remaining) {
-                if(!stack.isEmpty()) {
-                    containerItems.add(stack.copy());
-                }
-            }*/
-
             for (int i = 0; i < 9; i++) {
                 if (getStackInSlot(i).isEmpty()) {
                     setInventorySlotContents(i, output);
 
                     break;
-                } else if (ItemUtil.areStackMergable(getStackInSlot(i), output)) {
+                } else if (ItemUtil.areStacksMergable(getStackInSlot(i), output)) {
                     ItemStack cur = getStackInSlot(i).copy();
                     cur.setCount(cur.getCount() + output.getCount());
-
-                    if (cur.getCount() > cur.getMaxStackSize()) {
-                        ItemStack overflow = cur.copy();
-
-                        overflow.setCount(cur.getCount() - cur.getMaxStackSize());
-                        cur.setCount(cur.getMaxStackSize());
-                        //containerItems.add(overflow);
-                    }
 
                     setInventorySlotContents(i, cur);
 
@@ -135,11 +105,11 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
         if (remaining != null && remaining.size() > 0 && avail.getItem().hasContainerItem(avail)) {
             ItemStack used = avail.getItem().getContainerItem(avail);
 
-            if(used != ItemStack.EMPTY) {
-                for(int i=0; i < remaining.size();  i++) {
+            if(!used.isEmpty()) {
+                for(int i = 0; i < remaining.size();  i++) {
                     ItemStack stack = remaining.get(i);
 
-                    if(stack != ItemStack.EMPTY && stack.isItemEqualIgnoreDurability(used) && isItemValidForSlot(slot, stack)) {
+                    if(!stack.isEmpty() && stack.isItemEqualIgnoreDurability(used) && isItemValidForSlot(slot, stack)) {
                         remaining.set(i, ItemStack.EMPTY);
 
                         return stack;
@@ -157,92 +127,20 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
         return avail;
     }
 
-    private boolean compareDamageable(ItemStack stack, ItemStack required) {
-        if (stack.isItemEqual(required)) {
-            return true;
-        }
-
-        if (stack.isItemStackDamageable() && stack.getItem() == required.getItem()) {
-            return stack.getItemDamage() < stack.getMaxDamage();
-        }
-
-        return false;
-    }
-
-    public void updateCraftingOutput() {
-        InventoryCrafting inv = new InventoryCrafting(new Container() {
-
-            @Override
-            public boolean canInteractWith(EntityPlayer player) {
-                return false;
-            }
-        }, 3, 3);
-
-        for (int i = 0; i < 9; i++) {
-            inv.setInventorySlotContents(i, getCraftingGrid().getStackInSlot(i));
-        }
-
-        ItemStack matches = CraftingManager.getInstance().findMatchingRecipe(inv, world);
-
-        getCraftResult().setInventorySlotContents(0, matches);
-
-        markDirty();
-    }
-
     @Override
     public void update() {
-        ticksSinceLastCraft++;
+        if (world.isRemote) {
+            return;
+        }
 
-        if (ticksSinceLastCraft >= 3 && !getCraftResult().getStackInSlot(0).isEmpty()) {
+        TICKS_SINCE_LAST_CRAFT++;
+
+        if (TICKS_SINCE_LAST_CRAFT >= 3) {
             if (craftRecipe()) {
-                ticksSinceLastCraft = 0;
+                TICKS_SINCE_LAST_CRAFT = 0;
             }
         }
     }
-
-    /*@Override
-    public void readFromNBT(NBTTagCompound tagCompound) {
-        super.readFromNBT(tagCompound);
-
-        NBTTagList tagList = tagCompound.getTagList("Inventory", 10);
-
-        craftingGrid.readFromNBT(tagCompound, "CraftingGrid");
-
-        for (int i = 0; i < tagList.tagCount(); i++) {
-            NBTTagCompound tagCompoundSlot = tagList.getCompoundTagAt(i);
-
-            int index = tagCompoundSlot.getByte("Slot");
-
-            if (index >= 0 && index < inventory.size()) {
-                inventory.set(i, new ItemStack(tagCompoundSlot));
-            }
-        }
-    }
-
-    @Override
-    public NBTTagCompound writeToNBT(NBTTagCompound tagCompound) {
-        super.writeToNBT(tagCompound);
-
-        NBTTagList tagList = new NBTTagList();
-
-        craftingGrid.writeFromNBT(tagCompound, "CraftingGrid");
-
-        for (byte i = 0; i < inventory.size(); i++) {
-            NBTTagCompound tagCompoundSlot = new NBTTagCompound();
-
-            tagList.appendTag(tagCompoundSlot);
-
-            tagCompoundSlot.setByte("Slot", i);
-
-            inventory.get(i).writeToNBT(tagCompoundSlot);
-        }
-
-        tagCompound.setTag("Inventory", tagList);
-
-        return tagCompound;
-
-        return tagCompound;
-    }*/
 
     @Override
     public int[] getSlotsForFace(EnumFacing side) {
@@ -318,7 +216,7 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
     public void setInventorySlotContents(int index, ItemStack stack) {
         inventory.set(index, stack);
 
-        if (stack != ItemStack.EMPTY && stack.getCount() > getInventoryStackLimit()) {
+        if (!stack.isEmpty() && stack.getCount() > getInventoryStackLimit()) {
             stack.setCount(getInventoryStackLimit());
         }
 
@@ -374,6 +272,11 @@ public class TileMolecularFabricator extends TileBase implements ISidedInventory
     public boolean hasCustomName() {
         return false;
     }
+
+    private InventoryCrafting craftingMatrix = new InventoryCrafting(new Container() {
+        @Override
+        public boolean canInteractWith(EntityPlayer player) {
+            return false;
+        }
+    }, 3, 3);
 }
-
-
