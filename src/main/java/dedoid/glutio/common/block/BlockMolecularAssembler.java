@@ -7,6 +7,7 @@ import dedoid.glutio.common.lib.LibBlockNames;
 import dedoid.glutio.common.net.PacketHandler;
 import dedoid.glutio.common.net.PacketMolecularAssembler;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
@@ -38,5 +39,20 @@ public class BlockMolecularAssembler extends BlockMachine {
         }
 
         return true;
+    }
+
+    @Override
+    public void breakBlock(World world, BlockPos pos, IBlockState state) {
+        TileMolecularAssembler tile = (TileMolecularAssembler) world.getTileEntity(pos);
+
+        if (tile != null) {
+            for (int i = 0; i < 9; i++) {
+                if (!tile.getStackInSlot(i).isEmpty()) {
+                    EntityItem item = new EntityItem(world, pos.getX(), pos.getY(), pos.getZ(), tile.getStackInSlot(i));
+
+                    world.spawnEntity(item);
+                }
+            }
+        }
     }
 }
