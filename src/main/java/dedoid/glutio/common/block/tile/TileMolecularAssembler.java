@@ -1,6 +1,5 @@
 package dedoid.glutio.common.block.tile;
 
-import dedoid.glutio.common.core.util.FakePlayerGlutIO;
 import dedoid.glutio.common.core.util.ItemUtil;
 import dedoid.glutio.common.inventory.InventoryPhantomGrid;
 import net.minecraft.entity.player.EntityPlayer;
@@ -10,16 +9,12 @@ import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.NonNullList;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 
 public class TileMolecularAssembler extends TileBase implements ITickable, ISidedInventory {
 
     private NonNullList<ItemStack> inventory;
     private InventoryPhantomGrid phantomGrid;
     private InventoryCraftResult craftResult;
-
-    private FakePlayerGlutIO internalPlayer;
 
     private long TICKS_SINCE_LAST_CRAFT;
 
@@ -43,73 +38,79 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
         return craftResult;
     }
 
-    //TODO: don't craft when inventory full
     private boolean craftRecipe() {
-        int[] usedItems = new int[9];
+        int used[] = new int[9];
 
         for (int i = 0; i < 9; i++) {
             ItemStack required = craftingMatrix.getStackInSlot(i);
 
-            if (required != ItemStack.EMPTY) {
-                for (int j = 0; j < 9; j++) {
-                    if (getStackInSlot(j) != ItemStack.EMPTY && getStackInSlot(j).getCount() > usedItems[j] && ItemUtil.isItemEqual(getStackInSlot(j), required, true, false)) {
-                        required = ItemStack.EMPTY;
-                        usedItems[j]++;
-                    }
-                }
+            for (int j = 0; j < 9; j++) {
+                if (!getStackInSlot(j).isEmpty() && getStackInSlot(j).getCount() > used[j] && ItemUtil.isItemEqual(getStackInSlot(j), required, true, false)) {
+                    required = ItemStack.EMPTY;
 
-                if (required != ItemStack.EMPTY) {
-                    return false;
+                    used[j]++;
                 }
             }
 
+            if (!required.isEmpty()) {
+                return false;
+            }
         }
 
         ItemStack output = CraftingManager.getInstance().findMatchingRecipe(craftingMatrix, world);
 
+        if (output.isEmpty()) {
+            return false;
+        }
+
+        for (int i = 0; i < 9; i++) {
+            if (getStackInSlot(i).isEmpty()) {
+                break;
+            } else if (ItemUtil.areStacksMergable(getStackInSlot(i), output)) {
+                break;
+            }
+
+            if (i == 8) {
+                System.out.println("cancel");
+                return false;
+            }
+        }
+
         NonNullList<ItemStack> remaining = CraftingManager.getInstance().getRemainingItems(craftingMatrix, world);
 
-        if (!output.isEmpty()) {
-            if (internalPlayer == null) {
-                internalPlayer = new FakePlayerGlutIO(world, getPos());
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < used[i] && !getStackInSlot(i).isEmpty(); j++) {
+                setInventorySlotContents(i, eatItem(getStackInSlot(i).copy(), remaining));
             }
+        }
 
-            MinecraftForge.EVENT_BUS.post(new PlayerEvent.ItemCraftedEvent(internalPlayer, output, craftingMatrix));
+        for (int i = 0; i < 9; i++) {
+            if (getStackInSlot(i).isEmpty()) {
+                setInventorySlotContents(i, output);
 
-            for (int i = 0; i < 9; i++) {
-                for (int j = 0; j < usedItems[i] && !getStackInSlot(i).isEmpty(); j++) {
-                    setInventorySlotContents(i, eatOneItemForCrafting(i, getStackInSlot(i).copy(), remaining));
-                }
-            }
+                break;
+            } else if (ItemUtil.areStacksMergable(getStackInSlot(i), output)) {
+                ItemStack current = getStackInSlot(i).copy();
+                current.setCount(current.getCount() + output.getCount());
 
-            for (int i = 0; i < 9; i++) {
-                if (getStackInSlot(i).isEmpty()) {
-                    setInventorySlotContents(i, output);
+                setInventorySlotContents(i, current);
 
-                    break;
-                } else if (ItemUtil.areStacksMergable(getStackInSlot(i), output)) {
-                    ItemStack cur = getStackInSlot(i).copy();
-                    cur.setCount(cur.getCount() + output.getCount());
-
-                    setInventorySlotContents(i, cur);
-
-                    break;
-                }
+                break;
             }
         }
 
         return true;
     }
 
-    private ItemStack eatOneItemForCrafting(int slot, ItemStack avail, NonNullList<ItemStack> remaining) {
-        if (remaining != null && remaining.size() > 0 && avail.getItem().hasContainerItem(avail)) {
+    private ItemStack eatItem(ItemStack avail, NonNullList<ItemStack> remaining) {
+        if (!remaining.isEmpty() && remaining.size() > 0 && avail.getItem().hasContainerItem(avail)) {
             ItemStack used = avail.getItem().getContainerItem(avail);
 
-            if(!used.isEmpty()) {
-                for(int i = 0; i < remaining.size();  i++) {
+            if (!used.isEmpty()) {
+                for (int i = 0; i < remaining.size(); i++) {
                     ItemStack stack = remaining.get(i);
 
-                    if(!stack.isEmpty() && stack.isItemEqualIgnoreDurability(used) && isItemValidForSlot(slot, stack)) {
+                    if (!stack.isEmpty() && stack.isItemEqualIgnoreDurability(used)) {
                         remaining.set(i, ItemStack.EMPTY);
 
                         return stack;
@@ -144,7 +145,7 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
 
     @Override
     public int[] getSlotsForFace(EnumFacing side) {
-        return new int[] {0, 1, 2, 3, 4, 5, 6, 7, 8};
+        return new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8};
     }
 
     @Override
@@ -182,13 +183,11 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
 
         if (!stack.isEmpty()) {
             if (stack.getCount() <= count) {
-                ItemStack result = stack;
-
                 setInventorySlotContents(index, ItemStack.EMPTY);
 
                 markDirty();
 
-                return result;
+                return stack;
             }
 
             ItemStack split = stack.splitStack(count);
