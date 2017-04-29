@@ -6,9 +6,11 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.math.BlockPos;
 
 public class TileMolecularAssembler extends TileBase implements ITickable, ISidedInventory {
 
@@ -16,14 +18,22 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
     private InventoryPhantomGrid phantomGrid;
     private InventoryCraftResult craftResult;
 
+    private NonNullList<ItemStack> adjacentInvs[];
+
     private long TICKS_SINCE_LAST_CRAFT;
+
+    private static ItemStack recipe;
 
     public TileMolecularAssembler() {
         inventory = NonNullList.withSize(9, ItemStack.EMPTY);
         phantomGrid = new InventoryPhantomGrid(this);
         craftResult = new InventoryCraftResult();
 
+        adjacentInvs = new NonNullList[4];
+
         TICKS_SINCE_LAST_CRAFT = 0;
+
+        recipe = ItemStack.EMPTY;
     }
 
     public IInventory getPhantomGrid() {
@@ -38,7 +48,35 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
         return craftResult;
     }
 
+    public ItemStack getRecipe() {
+        return recipe;
+    }
+
+    @Override
+    public void update() {
+        if (world.isRemote) {
+            return;
+        }
+
+        TICKS_SINCE_LAST_CRAFT++;
+
+        //updateInventories();
+
+        if (TICKS_SINCE_LAST_CRAFT >= 2) {
+            if (hasRecipe() && craftRecipe()) {
+                TICKS_SINCE_LAST_CRAFT = 0;
+            }
+        }
+    }
+
+    private boolean hasRecipe() {
+        recipe = CraftingManager.getInstance().findMatchingRecipe(craftingMatrix, world);
+
+        return !recipe.isEmpty();
+    }
+
     private boolean craftRecipe() {
+        //ArrayList<Integer> used = new ArrayList<Integer>(9);
         int used[] = new int[9];
 
         for (int i = 0; i < 9; i++) {
@@ -57,21 +95,14 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
             }
         }
 
-        ItemStack output = CraftingManager.getInstance().findMatchingRecipe(craftingMatrix, world);
-
-        if (output.isEmpty()) {
-            return false;
-        }
-
         for (int i = 0; i < 9; i++) {
             if (getStackInSlot(i).isEmpty()) {
                 break;
-            } else if (ItemUtil.areStacksMergable(getStackInSlot(i), output)) {
+            } else if (ItemUtil.areStacksMergable(getStackInSlot(i), recipe)) {
                 break;
             }
 
             if (i == 8) {
-                System.out.println("cancel");
                 return false;
             }
         }
@@ -86,12 +117,12 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
 
         for (int i = 0; i < 9; i++) {
             if (getStackInSlot(i).isEmpty()) {
-                setInventorySlotContents(i, output);
+                setInventorySlotContents(i, recipe);
 
                 break;
-            } else if (ItemUtil.areStacksMergable(getStackInSlot(i), output)) {
+            } else if (ItemUtil.areStacksMergable(getStackInSlot(i), recipe)) {
                 ItemStack current = getStackInSlot(i).copy();
-                current.setCount(current.getCount() + output.getCount());
+                current.setCount(current.getCount() + recipe.getCount());
 
                 setInventorySlotContents(i, current);
 
@@ -128,17 +159,20 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
         return avail;
     }
 
-    @Override
-    public void update() {
-        if (world.isRemote) {
-            return;
-        }
+    private void updateInventories() {
+        for (EnumFacing dir : EnumFacing.HORIZONTALS) {
+            int j = dir.getIndex() - 2;
 
-        TICKS_SINCE_LAST_CRAFT++;
+            BlockPos neighbour = pos.offset(dir);
 
-        if (TICKS_SINCE_LAST_CRAFT >= 3) {
-            if (craftRecipe()) {
-                TICKS_SINCE_LAST_CRAFT = 0;
+            TileEntity tile = world.getTileEntity(neighbour);
+
+            if (tile != null) {
+                if (tile instanceof IInventory) {
+                    for (int i = 9 * j; i < ((IInventory) tile).getSizeInventory() + 9 * j; i++) {
+                        inventory.add(((IInventory) tile).getStackInSlot(i));
+                    }
+                }
             }
         }
     }
