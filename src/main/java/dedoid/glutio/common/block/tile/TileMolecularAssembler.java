@@ -22,7 +22,7 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
 
     private long TICKS_SINCE_LAST_CRAFT;
 
-    private static ItemStack recipe;
+    public ItemStack recipe;
 
     public TileMolecularAssembler() {
         inventory = NonNullList.withSize(9, ItemStack.EMPTY);
@@ -52,6 +52,10 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
         return recipe;
     }
 
+    public void setRecipe(ItemStack recipe) {
+        this.recipe = recipe;
+    }
+
     @Override
     public void update() {
         if (world.isRemote) {
@@ -70,8 +74,6 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
     }
 
     private boolean hasRecipe() {
-        recipe = CraftingManager.getInstance().findMatchingRecipe(craftingMatrix, world);
-
         return !recipe.isEmpty();
     }
 

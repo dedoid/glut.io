@@ -64,9 +64,10 @@ public class PacketMolecularAssembler extends MessageTileEntity<TileMolecularAss
             tile.getCraftingMatrix().setInventorySlotContents(i, tile.getPhantomGrid().getStackInSlot(i));
         }
 
-        ItemStack matches = CraftingManager.getInstance().findMatchingRecipe(tile.getCraftingMatrix(), tile.getWorld());
+        ItemStack recipe = CraftingManager.getInstance().findMatchingRecipe(tile.getCraftingMatrix(), tile.getWorld());
 
-        tile.getCraftResult().setInventorySlotContents(0, matches);
+        tile.setRecipe(recipe);
+        tile.getCraftResult().setInventorySlotContents(0, recipe);
 
         tile.markDirty();
     }
