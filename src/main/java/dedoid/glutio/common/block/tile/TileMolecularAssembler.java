@@ -5,7 +5,6 @@ import dedoid.glutio.common.inventory.InventoryPhantomGrid;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.*;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
@@ -20,15 +19,21 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
 
     private ItemStack recipe;
 
+    private long TICKS_SINCE_LAST_INVENTORY_CHECK;
     private long TICKS_SINCE_LAST_CRAFT;
 
     public TileMolecularAssembler() {
-        inventory = NonNullList.withSize(9, ItemStack.EMPTY);
+        inventory = NonNullList.create();
+        for (int i = 0; i < 9; i++) {
+            inventory.add(ItemStack.EMPTY);
+        }
+
         phantomGrid = new InventoryPhantomGrid(this);
         craftResult = new InventoryCraftResult();
 
         recipe = ItemStack.EMPTY;
 
+        TICKS_SINCE_LAST_INVENTORY_CHECK = 0;
         TICKS_SINCE_LAST_CRAFT = 0;
     }
 
@@ -58,9 +63,13 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
             return;
         }
 
+        TICKS_SINCE_LAST_INVENTORY_CHECK++;
         TICKS_SINCE_LAST_CRAFT++;
 
-        //updateInventories();
+        if (TICKS_SINCE_LAST_INVENTORY_CHECK >= 5) {
+            updateInventories();
+            TICKS_SINCE_LAST_INVENTORY_CHECK = 0;
+        }
 
         if (TICKS_SINCE_LAST_CRAFT >= 2) {
             if (hasRecipe() && craftRecipe()) {
@@ -73,14 +82,14 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
         return !recipe.isEmpty();
     }
 
+    //TODO: bug where MA won't craft due to full inventory, but if crafting occurs there would be space
     private boolean craftRecipe() {
-        //ArrayList<Integer> used = new ArrayList<Integer>(9);
-        int used[] = new int[9];
+        int used[] = new int[inventory.size()];
 
         for (int i = 0; i < 9; i++) {
             ItemStack required = craftingMatrix.getStackInSlot(i);
 
-            for (int j = 0; j < 9; j++) {
+            for (int j = 0; j < inventory.size(); j++) {
                 if (!getStackInSlot(j).isEmpty() && getStackInSlot(j).getCount() > used[j] && ItemUtil.isItemEqual(getStackInSlot(j), required, true, false)) {
                     required = ItemStack.EMPTY;
 
@@ -105,11 +114,14 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
             }
         }
 
-        NonNullList<ItemStack> remaining = CraftingManager.getInstance().getRemainingItems(craftingMatrix, world);
 
-        for (int i = 0; i < 9; i++) {
+        for (int i = 0; i < inventory.size(); i++) {
             for (int j = 0; j < used[i] && !getStackInSlot(i).isEmpty(); j++) {
-                setInventorySlotContents(i, eatItem(getStackInSlot(i).copy(), remaining));
+                getStackInSlot(i).setCount(getStackInSlot(i).getCount() - 1);
+
+                if (getStackInSlot(i).getCount() == 0) {
+                    setInventorySlotContents(i, ItemStack.EMPTY);
+                }
             }
         }
 
@@ -131,43 +143,15 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
         return true;
     }
 
-    private ItemStack eatItem(ItemStack avail, NonNullList<ItemStack> remaining) {
-        if (!remaining.isEmpty() && remaining.size() > 0 && avail.getItem().hasContainerItem(avail)) {
-            ItemStack used = avail.getItem().getContainerItem(avail);
-
-            if (!used.isEmpty()) {
-                for (int i = 0; i < remaining.size(); i++) {
-                    ItemStack stack = remaining.get(i);
-
-                    if (!stack.isEmpty() && stack.isItemEqualIgnoreDurability(used)) {
-                        remaining.set(i, ItemStack.EMPTY);
-
-                        return stack;
-                    }
-                }
-            }
-        }
-
-        avail.setCount(avail.getCount() - 1);
-
-        if (avail.getCount() == 0) {
-            avail = ItemStack.EMPTY;
-        }
-
-        return avail;
-    }
-
     private void updateInventories() {
         for (EnumFacing dir : EnumFacing.HORIZONTALS) {
-            int j = dir.getIndex() - 2;
-
             BlockPos neighbour = pos.offset(dir);
 
             TileEntity tile = world.getTileEntity(neighbour);
 
             if (tile != null) {
                 if (tile instanceof IInventory) {
-                    for (int i = 9 * j; i < ((IInventory) tile).getSizeInventory() + 9 * j; i++) {
+                    for (int i = 0; i < ((IInventory) tile).getSizeInventory(); i++) {
                         inventory.add(((IInventory) tile).getStackInSlot(i));
                     }
                 }
@@ -182,12 +166,12 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
 
     @Override
     public boolean canInsertItem(int index, ItemStack stack, EnumFacing direction) {
-        return direction != EnumFacing.UP && direction != EnumFacing.DOWN;
+        return direction != EnumFacing.UP;
     }
 
     @Override
     public boolean canExtractItem(int index, ItemStack stack, EnumFacing direction) {
-        return direction != EnumFacing.UP && direction != EnumFacing.DOWN;
+        return direction != EnumFacing.UP;
     }
 
     @Override
