@@ -82,7 +82,6 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
         return !recipe.isEmpty();
     }
 
-    //TODO: bug where MA won't craft due to full inventory, but if crafting occurs there would be space
     private boolean craftRecipe() {
         int used[] = new int[inventory.size()];
 

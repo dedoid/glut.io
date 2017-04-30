@@ -1,0 +1,4 @@
+- finalize MA tesr item rendering
+- allow MA to auto output to adjacent MA
+- fix phantom slot weridness
+- fix MA bug where crafting will pause as the internal inventory is full, but if crafting were to occur there is actually space
