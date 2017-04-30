@@ -18,22 +18,18 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
     private InventoryPhantomGrid phantomGrid;
     private InventoryCraftResult craftResult;
 
-    private NonNullList<ItemStack> adjacentInvs[];
+    private ItemStack recipe;
 
     private long TICKS_SINCE_LAST_CRAFT;
-
-    public ItemStack recipe;
 
     public TileMolecularAssembler() {
         inventory = NonNullList.withSize(9, ItemStack.EMPTY);
         phantomGrid = new InventoryPhantomGrid(this);
         craftResult = new InventoryCraftResult();
 
-        adjacentInvs = new NonNullList[4];
+        recipe = ItemStack.EMPTY;
 
         TICKS_SINCE_LAST_CRAFT = 0;
-
-        recipe = ItemStack.EMPTY;
     }
 
     public IInventory getPhantomGrid() {
@@ -186,12 +182,12 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
 
     @Override
     public boolean canInsertItem(int index, ItemStack stack, EnumFacing direction) {
-        return true;
+        return direction != EnumFacing.UP && direction != EnumFacing.DOWN;
     }
 
     @Override
     public boolean canExtractItem(int index, ItemStack stack, EnumFacing direction) {
-        return true;
+        return direction != EnumFacing.UP && direction != EnumFacing.DOWN;
     }
 
     @Override
