@@ -19,6 +19,8 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
 
     private ItemStack recipe;
 
+    private TileMolecularAssembler adjacentMA[];
+
     private long TICKS_SINCE_LAST_INVENTORY_CHECK;
     private long TICKS_SINCE_LAST_CRAFT;
 
@@ -32,6 +34,8 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
         craftResult = new InventoryCraftResult();
 
         recipe = ItemStack.EMPTY;
+
+        adjacentMA = new TileMolecularAssembler[4];
 
         TICKS_SINCE_LAST_INVENTORY_CHECK = 0;
         TICKS_SINCE_LAST_CRAFT = 0;
@@ -101,18 +105,54 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
             }
         }
 
-        for (int i = 0; i < 9; i++) {
-            if (getStackInSlot(i).isEmpty()) {
-                break;
-            } else if (ItemUtil.areStacksMergable(getStackInSlot(i), recipe)) {
-                break;
-            }
+        boolean found[] = new boolean[4];
+        for (int i = 0; i < 4; i++) {
+            if (adjacentMA[i] != null) {
+                for (int j = 0; j < 9; j++) {
+                    if (adjacentMA[i].getStackInSlot(j).isEmpty()) {
+                        found[i] = true;
 
-            if (i == 8) {
-                return false;
+                        break;
+                    } else if (ItemUtil.areStacksMergable(adjacentMA[i].getStackInSlot(j), recipe)) {
+                        found[i] = true;
+
+                        break;
+                    }
+
+                    if (j == 8) {
+                        found[i] = false;
+                    }
+                }
             }
         }
 
+        boolean found2 = true;
+        int dis = -1;
+        for (int i = 0; i < 4; i++) {
+            if (found[i]) {
+                dis = i;
+
+                break;
+            }
+
+            if (i == 3) {
+                found2 = false;
+            }
+        }
+
+        if (!found2) {
+            for (int i = 0; i < 9; i++) {
+                if (getStackInSlot(i).isEmpty()) {
+                    break;
+                } else if (ItemUtil.areStacksMergable(getStackInSlot(i), recipe)) {
+                    break;
+                }
+
+                if (i == 8) {
+                    return false;
+                }
+            }
+        }
 
         for (int i = 0; i < inventory.size(); i++) {
             for (int j = 0; j < used[i] && !getStackInSlot(i).isEmpty(); j++) {
@@ -124,18 +164,37 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
             }
         }
 
-        for (int i = 0; i < 9; i++) {
-            if (getStackInSlot(i).isEmpty()) {
-                setInventorySlotContents(i, recipe);
+        if (found2) {
+            for (int i = 0; i < 9; i++) {
+                if (adjacentMA[dis].getStackInSlot(i).isEmpty()) {
+                    adjacentMA[dis].setInventorySlotContents(i, recipe);
 
-                break;
-            } else if (ItemUtil.areStacksMergable(getStackInSlot(i), recipe)) {
-                ItemStack current = getStackInSlot(i).copy();
-                current.setCount(current.getCount() + recipe.getCount());
+                    break;
+                } else if (ItemUtil.areStacksMergable(adjacentMA[dis].getStackInSlot(i), recipe)) {
+                    ItemStack current = adjacentMA[dis].getStackInSlot(i).copy();
+                    current.setCount(current.getCount() + recipe.getCount());
 
-                setInventorySlotContents(i, current);
+                    adjacentMA[dis].setInventorySlotContents(i, current);
 
-                break;
+                    break;
+                }
+            }
+        }
+
+        if (!found2) {
+            for (int i = 0; i < 9; i++) {
+                if (getStackInSlot(i).isEmpty()) {
+                    setInventorySlotContents(i, recipe);
+
+                    break;
+                } else if (ItemUtil.areStacksMergable(getStackInSlot(i), recipe)) {
+                    ItemStack current = getStackInSlot(i).copy();
+                    current.setCount(current.getCount() + recipe.getCount());
+
+                    setInventorySlotContents(i, current);
+
+                    break;
+                }
             }
         }
 
@@ -149,7 +208,24 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
             TileEntity tile = world.getTileEntity(neighbour);
 
             if (tile != null) {
-                if (tile instanceof IInventory) {
+                if (tile instanceof TileMolecularAssembler) {
+                    int ma = dir.getIndex() - 2;
+
+                    adjacentMA[ma] = (TileMolecularAssembler) tile;
+
+                    boolean add = false;
+                    for (int i = 0; i < 9; i++) {
+                        if (ItemUtil.isItemEqual(getRecipe(), adjacentMA[ma].getCraftingMatrix().getStackInSlot(i), true, false)) {
+                            add = true;
+
+                            break;
+                        }
+                    }
+
+                    if (!add) {
+                        adjacentMA[ma] = null;
+                    }
+                } else if (tile instanceof IInventory) {
                     for (int i = 0; i < ((IInventory) tile).getSizeInventory(); i++) {
                         inventory.add(((IInventory) tile).getStackInSlot(i));
                     }
