@@ -3,6 +3,7 @@ package dedoid.glutio.common;
 import dedoid.glutio.client.core.handler.GuiHandler;
 import dedoid.glutio.common.block.ModBlocks;
 import dedoid.glutio.common.core.proxy.IProxy;
+import dedoid.glutio.common.item.ModItems;
 import dedoid.glutio.common.lib.LibMisc;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -23,6 +24,7 @@ public class GlutIO {
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         ModBlocks.init();
+        ModItems.init();
 
         proxy.preInit(event);
     }
