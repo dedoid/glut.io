@@ -4,8 +4,6 @@ import dedoid.glutio.client.lib.LibGuiIDs;
 import dedoid.glutio.common.GlutIO;
 import dedoid.glutio.common.block.tile.TileMolecularAssembler;
 import dedoid.glutio.common.lib.LibBlockNames;
-import dedoid.glutio.common.net.PacketHandler;
-import dedoid.glutio.common.net.PacketMolecularAssembler;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
@@ -14,7 +12,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.relauncher.Side;
 
 import javax.annotation.Nullable;
 
@@ -22,8 +19,6 @@ public class BlockMolecularAssembler extends BlockMachine {
 
     public BlockMolecularAssembler() {
         super(LibBlockNames.MOLECULAR_ASSEMBLER);
-
-        PacketHandler.INSTANCE.registerMessage(PacketMolecularAssembler.class, PacketMolecularAssembler.class, PacketHandler.nextID(), Side.SERVER);
     }
 
     @Nullable

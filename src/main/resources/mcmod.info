@@ -1,0 +1,17 @@
+[
+{
+  "modid": "Glut IO",
+  "name": "Glut IO",
+  "description": "Desc",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "logoFile": "",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["dedoid"],
+  "credits": "",
+  "parent": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]

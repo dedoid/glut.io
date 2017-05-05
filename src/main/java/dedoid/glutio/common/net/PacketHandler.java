@@ -2,30 +2,43 @@ package dedoid.glutio.common.net;
 
 import dedoid.glutio.common.lib.LibMisc;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
+import net.minecraftforge.fml.relauncher.Side;
 
 public class PacketHandler {
 
     public static final SimpleNetworkWrapper INSTANCE = NetworkRegistry.INSTANCE.newSimpleChannel(LibMisc.MOD_ID);
 
-    private static int ID = 0;
-
-    public static int nextID() {
-        return ID++;
-    }
-
-    public static void sendToAllAround(IMessage message, TileEntity tile, int range) {
-        INSTANCE.sendToAllAround(message, new NetworkRegistry.TargetPoint(tile.getWorld().provider.getDimension(), tile.getPos().getX(), tile.getPos().getY(), tile.getPos().getZ(), range));
-    }
-
-    public static void sendToAllAround(IMessage message, TileEntity te) {
-        sendToAllAround(message, te, 64);
+    public static void init() {
+        INSTANCE.registerMessage(PacketMolecularAssembler.class, PacketMolecularAssembler.class, 0, Side.SERVER);
+        INSTANCE.registerMessage(PacketTeleportTablet.class, MessageTeleportTablet.class, 1, Side.SERVER);
     }
 
     public static void sendTo(IMessage message, EntityPlayerMP player) {
         INSTANCE.sendTo(message, player);
+    }
+
+    public static void sendToAll(IMessage message) {
+        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+
+        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
+            sendTo(message, player);
+        }
+    }
+
+    public static void sendToAllAround(IMessage message, NetworkRegistry.TargetPoint point) {
+        INSTANCE.sendToAllAround(message, point);
+    }
+
+    public static void sendToDimension(IMessage message, int dimension) {
+        INSTANCE.sendToDimension(message, dimension);
+    }
+
+    public static void sendToServer(IMessage message) {
+        INSTANCE.sendToServer(message);
     }
 }

@@ -7,7 +7,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 
 public abstract class MessageTileEntity<T extends TileEntity> implements IMessage {
 
@@ -51,10 +50,6 @@ public abstract class MessageTileEntity<T extends TileEntity> implements IMessag
         }
 
         return null;
-    }
-
-    protected World getWorld(MessageContext ctx) {
-        return ctx.getServerHandler().playerEntity.world;
     }
 }
 

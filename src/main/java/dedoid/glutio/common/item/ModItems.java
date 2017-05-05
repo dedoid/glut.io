@@ -5,9 +5,9 @@ import net.minecraft.item.Item;
 
 public class ModItems {
 
-    public static Item linkingTablet;
+    public static Item teleportTablet;
 
     public static void init() {
-        linkingTablet = new ItemLinkingTablet(LibItemNames.LINKING_TABLET);
+        teleportTablet = new ItemTeleportTablet(LibItemNames.TELEPORT_TABLET[1]);
     }
 }

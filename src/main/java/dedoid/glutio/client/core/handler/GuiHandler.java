@@ -1,8 +1,10 @@
 package dedoid.glutio.client.core.handler;
 
 import dedoid.glutio.client.gui.GuiMolecularAssembler;
+import dedoid.glutio.client.gui.GuiTeleportTablet;
 import dedoid.glutio.client.lib.LibGuiIDs;
 import dedoid.glutio.common.block.tile.TileMolecularAssembler;
+import dedoid.glutio.common.gui.container.ContainerBase;
 import dedoid.glutio.common.gui.container.ContainerMolecularAssembler;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
@@ -17,6 +19,10 @@ public class GuiHandler implements IGuiHandler {
             return new ContainerMolecularAssembler(player.inventory, (TileMolecularAssembler) world.getTileEntity(new BlockPos(x, y, z)));
         }
 
+        if (ID == LibGuiIDs.TELEPORT_TABLET) {
+            return new ContainerBase();
+        }
+
         return null;
     }
 
@@ -24,6 +30,10 @@ public class GuiHandler implements IGuiHandler {
     public Object getClientGuiElement(int ID, EntityPlayer player, World world, int x, int y, int z) {
         if (ID == LibGuiIDs.MOLECULAR_ASSEMBLER) {
             return new GuiMolecularAssembler(player.inventory, (TileMolecularAssembler) world.getTileEntity(new BlockPos(x, y, z)));
+        }
+
+        if (ID == LibGuiIDs.TELEPORT_TABLET) {
+            return new GuiTeleportTablet(player.inventory, player.getHeldItemMainhand());
         }
 
         return null;

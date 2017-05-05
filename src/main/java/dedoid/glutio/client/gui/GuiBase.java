@@ -9,6 +9,10 @@ public class GuiBase extends GuiContainer {
 
     ResourceLocation texture;
 
+    public GuiBase(String texture) {
+        this(new ContainerBase(), texture);
+    }
+
     public GuiBase(ContainerBase container, String texture) {
         super(container);
 

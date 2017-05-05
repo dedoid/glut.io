@@ -1,0 +1,12 @@
+
+# MISC
+itemGroup.glutio=Glut IO
+
+misc.dimension=Dimension
+
+# ITEMS
+item.unlinkedTeleportTablet.name=Unlinked Teleport Tablet
+item.teleportTablet.name=§r§bTeleport Tablet
+
+# BLOCKS
+tile.molecularAssembler.name=Molecular Assembler

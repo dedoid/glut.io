@@ -31,5 +31,4 @@ public class GlutTeleporter extends Teleporter {
         entity.motionY = 0.0f;
         entity.motionZ = 0.0f;
     }
-
 }
