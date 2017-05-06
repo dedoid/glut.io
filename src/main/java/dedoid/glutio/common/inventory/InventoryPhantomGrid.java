@@ -2,7 +2,7 @@ package dedoid.glutio.common.inventory;
 
 import dedoid.glutio.common.block.tile.TileMolecularAssembler;
 import dedoid.glutio.common.core.handler.PacketHandler;
-import dedoid.glutio.common.net.PacketMolecularAssembler;
+import dedoid.glutio.common.net.MessageMolecularAssembler;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
@@ -44,7 +44,7 @@ public class InventoryPhantomGrid implements IInventory {
     public ItemStack decrStackSize(int index, int count) {
         inventory.set(index, ItemStack.EMPTY);
 
-        PacketHandler.INSTANCE.sendToServer(PacketMolecularAssembler.setSlot(tile, index, ItemStack.EMPTY));
+        PacketHandler.INSTANCE.sendToServer(new MessageMolecularAssembler(tile.getPos(), index, ItemStack.EMPTY));
 
         return ItemStack.EMPTY;
     }
@@ -53,7 +53,7 @@ public class InventoryPhantomGrid implements IInventory {
     public ItemStack removeStackFromSlot(int index) {
         inventory.set(index, ItemStack.EMPTY);
 
-        PacketHandler.INSTANCE.sendToServer(PacketMolecularAssembler.setSlot(tile, index, ItemStack.EMPTY));
+        PacketHandler.INSTANCE.sendToServer(new MessageMolecularAssembler(tile.getPos(), index, ItemStack.EMPTY));
 
         return ItemStack.EMPTY;
     }
@@ -65,11 +65,11 @@ public class InventoryPhantomGrid implements IInventory {
 
             inventory.get(index).setCount(1);
 
-            PacketHandler.INSTANCE.sendToServer(PacketMolecularAssembler.setSlot(tile, index, inventory.get(index)));
+            PacketHandler.INSTANCE.sendToServer(new MessageMolecularAssembler(tile.getPos(), index, inventory.get(index)));
         } else {
             inventory.set(index, ItemStack.EMPTY);
 
-            PacketHandler.INSTANCE.sendToServer(PacketMolecularAssembler.setSlot(tile, index, ItemStack.EMPTY));
+            PacketHandler.INSTANCE.sendToServer(new MessageMolecularAssembler(tile.getPos(), index, ItemStack.EMPTY));
         }
     }
 

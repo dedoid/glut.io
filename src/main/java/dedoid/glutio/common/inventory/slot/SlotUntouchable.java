@@ -1,4 +1,4 @@
-package dedoid.glutio.common.gui.slot;
+package dedoid.glutio.common.inventory.slot;
 
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;

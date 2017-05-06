@@ -1,6 +1,7 @@
 package dedoid.glutio.common.core.handler;
 
 import dedoid.glutio.common.lib.LibMisc;
+import dedoid.glutio.common.net.MessageMolecularAssembler;
 import dedoid.glutio.common.net.MessageTeleportTablet;
 import dedoid.glutio.common.net.PacketMolecularAssembler;
 import dedoid.glutio.common.net.PacketTeleportTablet;
@@ -17,7 +18,7 @@ public class PacketHandler {
     public static final SimpleNetworkWrapper INSTANCE = NetworkRegistry.INSTANCE.newSimpleChannel(LibMisc.MOD_ID);
 
     public static void init() {
-        INSTANCE.registerMessage(PacketMolecularAssembler.class, PacketMolecularAssembler.class, 0, Side.SERVER);
+        INSTANCE.registerMessage(PacketMolecularAssembler.class, MessageMolecularAssembler.class, 0, Side.SERVER);
         INSTANCE.registerMessage(PacketTeleportTablet.class, MessageTeleportTablet.class, 1, Side.SERVER);
     }
 

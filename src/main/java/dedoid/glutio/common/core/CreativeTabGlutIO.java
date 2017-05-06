@@ -1,9 +1,9 @@
 package dedoid.glutio.common.core;
 
 import dedoid.glutio.client.lib.LibResources;
+import dedoid.glutio.common.item.ModItems;
 import dedoid.glutio.common.lib.LibMisc;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 
 import javax.annotation.Nonnull;
@@ -21,7 +21,7 @@ public class CreativeTabGlutIO extends CreativeTabs {
     @Nonnull
     @Override
     public ItemStack getIconItemStack() {
-        return new ItemStack(Items.SKULL);
+        return new ItemStack(ModItems.teleportTablet);
     }
 
     @Nonnull

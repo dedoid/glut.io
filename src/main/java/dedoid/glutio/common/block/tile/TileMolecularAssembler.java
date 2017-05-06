@@ -276,14 +276,14 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
             if (stack.getCount() <= count) {
                 setInventorySlotContents(index, ItemStack.EMPTY);
 
-                markDirty();
+                //markDirty();
 
                 return stack;
             }
 
             ItemStack split = stack.splitStack(count);
 
-            markDirty();
+            //markDirty();
 
             return split;
         }
@@ -297,7 +297,7 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
 
         inventory.set(index, ItemStack.EMPTY);
 
-        markDirty();
+        //markDirty();
 
         return stack;
     }
@@ -310,7 +310,7 @@ public class TileMolecularAssembler extends TileBase implements ITickable, ISide
             stack.setCount(getInventoryStackLimit());
         }
 
-        markDirty();
+        //markDirty();
     }
 
     @Override

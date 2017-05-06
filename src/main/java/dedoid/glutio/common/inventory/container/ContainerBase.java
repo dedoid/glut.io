@@ -1,7 +1,7 @@
-package dedoid.glutio.common.gui.container;
+package dedoid.glutio.common.inventory.container;
 
 import dedoid.glutio.common.core.util.ItemUtil;
-import dedoid.glutio.common.gui.slot.SlotBase;
+import dedoid.glutio.common.inventory.slot.SlotBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.ClickType;

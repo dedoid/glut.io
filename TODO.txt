@@ -6,3 +6,7 @@
 - apparently shifting items is completely broken?
 - teleport tablet portals?
 - fix tele tablet in off hand
+- inx mixer type block for creating teleport tablets
+    - requires 1 r, g, b dye for 1 tablet
+    - molten glass?
+- MA speed config option

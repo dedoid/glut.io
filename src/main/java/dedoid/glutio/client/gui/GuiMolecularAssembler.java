@@ -2,7 +2,7 @@ package dedoid.glutio.client.gui;
 
 import dedoid.glutio.client.lib.LibResources;
 import dedoid.glutio.common.block.tile.TileMolecularAssembler;
-import dedoid.glutio.common.gui.container.ContainerMolecularAssembler;
+import dedoid.glutio.common.inventory.container.ContainerMolecularAssembler;
 import dedoid.glutio.common.lib.LibBlockNames;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.InventoryPlayer;

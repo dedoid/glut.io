@@ -3,6 +3,7 @@ package dedoid.glutio.common;
 import dedoid.glutio.client.core.handler.GuiHandler;
 import dedoid.glutio.common.block.ModBlocks;
 import dedoid.glutio.common.core.proxy.IProxy;
+import dedoid.glutio.common.crafting.ModCraftingRecipes;
 import dedoid.glutio.common.item.ModItems;
 import dedoid.glutio.common.lib.LibMisc;
 import dedoid.glutio.common.core.handler.PacketHandler;
@@ -34,6 +35,8 @@ public class GlutIO {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
+        ModCraftingRecipes.init();
+
         NetworkRegistry.INSTANCE.registerGuiHandler(INSTANCE, new GuiHandler());
 
         packetHandler.init();

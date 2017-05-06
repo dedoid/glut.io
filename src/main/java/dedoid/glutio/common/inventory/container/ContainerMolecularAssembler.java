@@ -1,8 +1,8 @@
-package dedoid.glutio.common.gui.container;
+package dedoid.glutio.common.inventory.container;
 
 import dedoid.glutio.common.block.tile.TileMolecularAssembler;
-import dedoid.glutio.common.gui.slot.SlotPhantom;
-import dedoid.glutio.common.gui.slot.SlotUntouchable;
+import dedoid.glutio.common.inventory.slot.SlotPhantom;
+import dedoid.glutio.common.inventory.slot.SlotUntouchable;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Slot;
 
