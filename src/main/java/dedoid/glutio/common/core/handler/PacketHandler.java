@@ -1,6 +1,9 @@
-package dedoid.glutio.common.net;
+package dedoid.glutio.common.core.handler;
 
 import dedoid.glutio.common.lib.LibMisc;
+import dedoid.glutio.common.net.MessageTeleportTablet;
+import dedoid.glutio.common.net.PacketMolecularAssembler;
+import dedoid.glutio.common.net.PacketTeleportTablet;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;

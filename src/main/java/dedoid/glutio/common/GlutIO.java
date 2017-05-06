@@ -5,7 +5,7 @@ import dedoid.glutio.common.block.ModBlocks;
 import dedoid.glutio.common.core.proxy.IProxy;
 import dedoid.glutio.common.item.ModItems;
 import dedoid.glutio.common.lib.LibMisc;
-import dedoid.glutio.common.net.PacketHandler;
+import dedoid.glutio.common.core.handler.PacketHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;

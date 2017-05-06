@@ -1,5 +1,6 @@
 package dedoid.glutio.client.core.proxy;
 
+import dedoid.glutio.client.core.handler.ModelHandler;
 import dedoid.glutio.client.render.RenderTileMolecularAssembler;
 import dedoid.glutio.common.block.tile.TileMolecularAssembler;
 import dedoid.glutio.common.core.proxy.IProxy;
@@ -12,6 +13,8 @@ public class ClientProxy implements IProxy {
 
     @Override
     public void preInit(FMLPreInitializationEvent event) {
+        ModelHandler.registerModels();
+
         ClientRegistry.bindTileEntitySpecialRenderer(TileMolecularAssembler.class, new RenderTileMolecularAssembler());
     }
 

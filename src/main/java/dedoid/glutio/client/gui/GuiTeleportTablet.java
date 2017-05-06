@@ -5,7 +5,6 @@ import dedoid.glutio.common.GlutIO;
 import dedoid.glutio.common.net.MessageTeleportTablet;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.resources.I18n;
-import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.DimensionManager;
 import org.lwjgl.input.Keyboard;
@@ -18,7 +17,7 @@ public class GuiTeleportTablet extends GuiBase {
 
     private GuiTextField fieldName;
 
-    public GuiTeleportTablet(InventoryPlayer invPlayer, ItemStack stackTablet) {
+    public GuiTeleportTablet(ItemStack stackTablet) {
         super(LibResources.GUI_TELEPORT_TABLET);
 
         this.stackTablet = stackTablet;

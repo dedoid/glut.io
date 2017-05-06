@@ -33,7 +33,7 @@ public class GuiHandler implements IGuiHandler {
         }
 
         if (ID == LibGuiIDs.TELEPORT_TABLET) {
-            return new GuiTeleportTablet(player.inventory, player.getHeldItemMainhand());
+            return new GuiTeleportTablet(player.getHeldItemMainhand());
         }
 
         return null;

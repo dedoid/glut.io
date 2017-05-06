@@ -1,7 +1,7 @@
 package dedoid.glutio.common.inventory;
 
 import dedoid.glutio.common.block.tile.TileMolecularAssembler;
-import dedoid.glutio.common.net.PacketHandler;
+import dedoid.glutio.common.core.handler.PacketHandler;
 import dedoid.glutio.common.net.PacketMolecularAssembler;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
