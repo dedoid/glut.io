@@ -1,11 +1,14 @@
 package dedoid.glutio.client.core.handler;
 
 import dedoid.glutio.client.gui.GuiMolecularAssembler;
+import dedoid.glutio.client.gui.GuiNullifier;
 import dedoid.glutio.client.gui.GuiTeleportTablet;
 import dedoid.glutio.client.lib.LibGuiIDs;
 import dedoid.glutio.common.block.tile.TileMolecularAssembler;
 import dedoid.glutio.common.inventory.container.ContainerBase;
 import dedoid.glutio.common.inventory.container.ContainerMolecularAssembler;
+import dedoid.glutio.common.inventory.container.ContainerNullifier;
+import dedoid.glutio.common.item.ItemNullifier;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -23,6 +26,10 @@ public class GuiHandler implements IGuiHandler {
             return new ContainerBase();
         }
 
+        if (ID == LibGuiIDs.NULLIFIER) {
+            return new ContainerNullifier(player.inventory, (ItemNullifier) player.getHeldItemMainhand().getItem());
+        }
+
         return null;
     }
 
@@ -34,6 +41,10 @@ public class GuiHandler implements IGuiHandler {
 
         if (ID == LibGuiIDs.TELEPORT_TABLET) {
             return new GuiTeleportTablet(player.getHeldItemMainhand());
+        }
+
+        if (ID == LibGuiIDs.NULLIFIER) {
+            return new GuiNullifier(player.inventory, (ItemNullifier) player.getHeldItemMainhand().getItem());
         }
 
         return null;

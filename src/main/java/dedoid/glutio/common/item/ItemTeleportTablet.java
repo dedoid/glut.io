@@ -26,6 +26,7 @@ public class ItemTeleportTablet extends ItemBase {
         super(name);
 
         setHasSubtypes(true);
+        setMaxStackSize(1);
     }
 
     @SideOnly(Side.CLIENT)
@@ -44,6 +45,10 @@ public class ItemTeleportTablet extends ItemBase {
     @Nonnull
     @Override
     public ActionResult<ItemStack> onItemRightClick(World world, EntityPlayer player, @Nonnull EnumHand hand) {
+        if (hand == EnumHand.OFF_HAND) {
+            return ActionResult.newResult(EnumActionResult.PASS, player.getHeldItemOffhand());
+        }
+
         ItemStack stack = player.getHeldItemMainhand();
 
         NBTTagCompound tagCompound = stack.getTagCompound();

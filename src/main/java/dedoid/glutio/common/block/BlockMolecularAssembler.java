@@ -13,6 +13,7 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class BlockMolecularAssembler extends BlockMachine {
@@ -37,7 +38,7 @@ public class BlockMolecularAssembler extends BlockMachine {
     }
 
     @Override
-    public void breakBlock(World world, BlockPos pos, IBlockState state) {
+    public void breakBlock(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
         TileMolecularAssembler tile = (TileMolecularAssembler) world.getTileEntity(pos);
 
         if (tile != null) {

@@ -7,6 +7,7 @@ misc.dimension=Dimension
 # ITEMS
 item.unlinkedTeleportTablet.name=Unlinked Teleport Tablet
 item.teleportTablet.name=§r§bTeleport Tablet
+item.nullifier.name=Nullifier
 
 # BLOCKS
 tile.molecularAssembler.name=Molecular Assembler
